@@ -4,6 +4,14 @@ class WordSet {
   final String last;
 
   WordSet(this.first, this.middle, this.last);
+
+  factory WordSet.fromJson(Map<String, dynamic> json) {
+    return WordSet(
+      json['p1'] as String,
+      json['p2'] as String,
+      json['p3'] as String,
+    );
+  }
 }
 
 class ScoreEntry {

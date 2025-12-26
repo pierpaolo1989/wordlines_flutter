@@ -1,16 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:worldlines_mobile/ads/ads_service.dart';
+import 'package:worldlines_mobile/data/wordset_repository.dart';
+import 'package:worldlines_mobile/game/game_controller.dart';
+import 'package:worldlines_mobile/game/game_feedback.dart';
+import 'package:worldlines_mobile/game/game_models.dart';
+import 'package:worldlines_mobile/leaderboard/leaderboard_page.dart';
 import 'package:worldlines_mobile/leaderboard/leaderboard_store.dart';
-
-import 'game_controller.dart';
-import 'game_feedback.dart';
-import 'game_models.dart';
-import '../widgets/otp_boxes.dart';
-import '../widgets/game_keyboard.dart';
-import '../widgets/glitter_overlay.dart';
-import '../leaderboard/leaderboard_page.dart';
+import 'package:worldlines_mobile/widgets/game_keyboard.dart';
+import 'package:worldlines_mobile/widgets/glitter_overlay.dart';
+import 'package:worldlines_mobile/widgets/otp_boxes.dart';
 
 class GuessWordPage extends StatefulWidget {
   final String language;
@@ -22,63 +21,12 @@ class GuessWordPage extends StatefulWidget {
 
 class _GuessWordPageState extends State<GuessWordPage> {
   late GameFeedback feedback;
-  late GameController controller;
+  GameController? controller;
   bool showGlitter = false;
+  bool loading = true;
+  String? error;
 
-  final List<WordSet> wordSets = [
-    WordSet("CANE", "BANANA", "GATTO"),
-    WordSet("SOLE", "COMPUTER", "LUNA"),
-    WordSet("MARE", "TELEFONO", "VENTO"),
-    WordSet("FUOCO", "ELEFANTE", "ACQUA"),
-    WordSet("LIBRO", "ASTRONAVE", "STELLA"),
-    WordSet("PIANO", "CHITARRA", "MUSICA"),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    feedback = GameFeedback();
-
-    controller = GameController(wordSets)
-      ..onGameEnd = () {
-        _showEndGameDialog(controller.score);
-      }
-      ..onShowAd = () {
-        if (!kIsWeb) AdService.showInterstitial();
-      };
-
-    if (!kIsWeb) {
-      AdService.loadInterstitial();
-    }
-  }
-
-  @override
-  void dispose() {
-    controller.disposeController();
-    feedback.dispose();
-    super.dispose();
-  }
-
-  void _onGuess(String letter) {
-    final before = controller.revealed.join();
-    controller.guess(letter);
-    final after = controller.revealed.join();
-
-    if (before != after) {
-      feedback.trigger(GameEvent.correct);
-    } else {
-      feedback.trigger(GameEvent.wrong);
-    }
-
-    if (!controller.revealed.contains("_")) {
-      feedback.trigger(GameEvent.win);
-      setState(() => showGlitter = true);
-      Future.delayed(
-        const Duration(milliseconds: 800),
-        () => setState(() => showGlitter = false),
-      );
-    }
-  }
+  final repo = WordSetRepository();
 
   Future<void> _showEndGameDialog(int score) async {
     final controllerText = TextEditingController();
@@ -116,9 +64,93 @@ class _GuessWordPageState extends State<GuessWordPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    feedback = GameFeedback();
+    _loadWords();
+  }
+
+  Future<void> _onGameEnd() async {
+    await _showEndGameDialog(controller!.score);
+
+    setState(() {
+      loading = true;
+    });
+
+    final newWords = await repo.fetchRandom(language: widget.language);
+
+    controller = GameController(newWords)..onGameEnd = _onGameEnd;
+
+    setState(() {
+      loading = false;
+    });
+  }
+
+  Future<void> _loadWords() async {
+    try {
+      final words = await repo.fetchRandom(language: widget.language);
+      controller = GameController(words)
+        ..onGameEnd = _onGameEnd
+        ..onShowAd = () {
+          AdService.showInterstitial();
+        };
+
+      setState(() => loading = false);
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+        loading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    controller?.disposeController();
+    feedback.dispose();
+    super.dispose();
+  }
+
+  void _onGuess(String letter) {
+    final ctrl = controller!;
+    final before = ctrl.revealed.join();
+
+    ctrl.guess(letter);
+    final after = ctrl.revealed.join();
+
+    feedback.trigger(before != after ? GameEvent.correct : GameEvent.wrong);
+
+    if (!ctrl.revealed.contains("_")) {
+      feedback.trigger(GameEvent.win);
+      setState(() => showGlitter = true);
+      Future.delayed(
+        const Duration(milliseconds: 800),
+        () => setState(() => showGlitter = false),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (error != null) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            "Errore:\n$error",
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return ChangeNotifierProvider.value(
-      value: controller,
+      value: controller!,
       child: Consumer<GameController>(
         builder: (context, ctrl, _) {
           return Scaffold(
@@ -137,8 +169,8 @@ class _GuessWordPageState extends State<GuessWordPage> {
                   child: Column(
                     children: [
                       const SizedBox(height: 70),
-                      Text(
-                        "⏱ ${ctrl.secondsLeft}",
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 250),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -146,6 +178,7 @@ class _GuessWordPageState extends State<GuessWordPage> {
                               ? Colors.redAccent
                               : Theme.of(context).colorScheme.primary,
                         ),
+                        child: Text("⏱ ${ctrl.secondsLeft}"),
                       ),
                       const SizedBox(height: 12),
                       Row(

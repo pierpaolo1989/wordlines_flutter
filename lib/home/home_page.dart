@@ -4,6 +4,7 @@ import '../game/guess_word_page.dart';
 import '../game/game_controller.dart';
 import '../game/game_models.dart';
 import 'package:country_icons/country_icons.dart';
+import 'login_page.dart'; // <-- nuova pagina login
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,6 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedLanguage = "IT";
+  bool isDarkMode = true; // stato per il tema
 
   // lista delle parole (esempio)
   final List<WordSet> wordSets = [
@@ -28,9 +30,37 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          // Pulsante login
+          IconButton(
+            icon: const Icon(Icons.login),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
+            },
+          ),
+          // Pulsante cambio tema
+          IconButton(
+            icon: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
+            onPressed: () {
+              setState(() {
+                isDarkMode = !isDarkMode;
+              });
+              // Cambia il tema globale
+              if (isDarkMode) {
+                _changeTheme(ThemeMode.dark);
+              } else {
+                _changeTheme(ThemeMode.light);
+              }
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
-          // Centro
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -44,7 +74,7 @@ class _HomePageState extends State<HomePage> {
                     letterSpacing: 4,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 40), // Spazio dal titolo AppBar
                 DropdownButton<String>(
                   value: selectedLanguage,
                   dropdownColor: Colors.black,
@@ -106,8 +136,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-
-          // Versione in basso a destra
           Positioned(
             bottom: 16,
             right: 16,
@@ -119,5 +147,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  void _changeTheme(ThemeMode mode) {
+    // Cambia il tema globalmente
+    // Serve un approccio come Riverpod o Provider per modificare il tema
+    // Per esempio con Provider potresti avere un ThemeNotifier
   }
 }

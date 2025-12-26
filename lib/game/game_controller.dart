@@ -65,7 +65,7 @@ class GameController extends ChangeNotifier {
     if (lives <= 0) {
       endGame();
     } else {
-      resetIndexAndContinue();
+      next();
     }
   }
 
@@ -74,19 +74,22 @@ class GameController extends ChangeNotifier {
   // -----------------------------
   void guess(String letter) {
     letter = letter.toUpperCase();
-    bool found = false;
 
     for (int i = 0; i < hiddenWord.length; i++) {
       if (hiddenWord[i].toUpperCase() == letter && revealed[i] == "_") {
-        revealed[i] = hiddenWord[i]; // mantiene il case originale
+        revealed[i] = hiddenWord[i];
         score += 10;
-        found = true;
       }
     }
 
     if (!revealed.contains("_")) {
       score += 20;
-      next();
+
+      if (currentRound >= maxRounds) {
+        endGame(); // ⬅️ FINE PARTITA QUI
+      } else {
+        next();
+      }
     }
 
     notifyListeners();
@@ -99,10 +102,9 @@ class GameController extends ChangeNotifier {
     timer?.cancel();
 
     if (currentRound >= maxRounds) {
-      onShowAd = () {
-        AdService.showInterstitial();
-      };
-      currentRound = 0;
+      onShowAd?.call(); // ✅ AD
+      endGame(); // ✅ DIALOG
+      return;
     }
 
     currentRound++;
