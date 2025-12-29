@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:worldlines_mobile/home/onboarding_page.dart';
+import 'package:worldlines_mobile/home/root_page.dart';
 import '../home/home_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -12,31 +13,27 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  bool _loading = true;
-  bool _seenOnboarding = false;
-
   @override
   void initState() {
     super.initState();
-    _checkOnboarding();
-    Timer(const Duration(seconds: 2), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              _seenOnboarding ? const HomePage() : const OnboardingPage(),
-        ),
-      );
-    });
+    _startFlow();
   }
 
-  Future<void> _checkOnboarding() async {
+  Future<void> _startFlow() async {
     final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('seenOnboarding') ?? false;
-    setState(() {
-      _seenOnboarding = seen;
-      _loading = false;
-    });
+    final seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
+
+    // splash delay
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) =>
+            seenOnboarding ? const RootPage() : const OnboardingPage(),
+      ),
+    );
   }
 
   @override

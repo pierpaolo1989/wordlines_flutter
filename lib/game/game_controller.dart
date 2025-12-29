@@ -9,9 +9,10 @@ class GameController extends ChangeNotifier {
   int currentIndex = 0;
   int currentRound = 1;
   final int maxRounds = 10;
+  bool gameOverByLives = false;
 
   int lives = 3;
-  int score = 0;
+  int score;
   int secondsLeft = 30;
 
   late String hiddenWord;
@@ -22,7 +23,10 @@ class GameController extends ChangeNotifier {
   VoidCallback? onGameEnd;
   VoidCallback? onShowAd;
 
-  GameController(this.wordSets) {
+  GameController(
+    this.wordSets, {
+    this.score = 0,
+  }) {
     startRound();
   }
 
@@ -63,6 +67,7 @@ class GameController extends ChangeNotifier {
     lives--;
 
     if (lives <= 0) {
+      gameOverByLives = true;
       endGame();
     } else {
       next();
@@ -86,7 +91,8 @@ class GameController extends ChangeNotifier {
       score += 20;
 
       if (currentRound >= maxRounds) {
-        endGame(); // ⬅️ FINE PARTITA QUI
+        gameOverByLives = false;
+        endGame();
       } else {
         next();
       }
@@ -102,8 +108,9 @@ class GameController extends ChangeNotifier {
     timer?.cancel();
 
     if (currentRound >= maxRounds) {
-      onShowAd?.call(); // ✅ AD
-      endGame(); // ✅ DIALOG
+      onShowAd?.call();
+      gameOverByLives = false;
+      endGame();
       return;
     }
 

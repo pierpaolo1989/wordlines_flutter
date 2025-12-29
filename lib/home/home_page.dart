@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:worldlines_mobile/login/auth_provider.dart';
+import 'package:worldlines_mobile/theme/theme_provider.dart';
 import '../game/guess_word_page.dart';
 import '../game/game_controller.dart';
 import '../game/game_models.dart';
@@ -29,34 +31,49 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    print("HOME BUILD – logged: ${auth.isLoggedIn}");
     return Scaffold(
       appBar: AppBar(
         actions: [
-          // Pulsante login
+          if (!auth.isLoggedIn)
+            IconButton(
+              icon: const Icon(Icons.login),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                );
+              },
+            )
+          else
+            PopupMenuButton(
+              icon: const Icon(Icons.person),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  enabled: false,
+                  child: Text("👤 ${auth.username}"),
+                ),
+                PopupMenuItem(
+                  child: const Text("Logout"),
+                  onTap: () async {
+                    await auth.signOut();
+                  },
+                ),
+              ],
+            ),
+
+          // tema
           IconButton(
-            icon: const Icon(Icons.login),
+            icon: Icon(
+              context.watch<ThemeProvider>().isDarkMode
+                  ? Icons.dark_mode
+                  : Icons.light_mode,
+            ),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              );
+              context.read<ThemeProvider>().toggleTheme();
             },
-          ),
-          // Pulsante cambio tema
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
-            onPressed: () {
-              setState(() {
-                isDarkMode = !isDarkMode;
-              });
-              // Cambia il tema globale
-              if (isDarkMode) {
-                _changeTheme(ThemeMode.dark);
-              } else {
-                _changeTheme(ThemeMode.light);
-              }
-            },
-          ),
+          )
         ],
       ),
       body: Stack(

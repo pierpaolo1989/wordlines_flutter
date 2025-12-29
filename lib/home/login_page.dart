@@ -120,9 +120,21 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
 
+      print("LOGIN RES USER: ${res.user}");
+      print("SESSION: ${res.session}");
+
       if (res.user != null) {
-        _showMessage("Login riuscito!");
-        Navigator.pop(context);
+        Navigator.pop(context); // AuthProvider aggiorna la Home
+      }
+    } on AuthException catch (e) {
+      print("AUTH ERROR: ${e.message}");
+
+      if (e.message.toLowerCase().contains('invalid login credentials')) {
+        _showMessage("Credenziali non valide");
+      } else if (e.message.toLowerCase().contains('email not confirmed')) {
+        _showMessage("Conferma la mail prima di accedere");
+      } else {
+        _showMessage(e.message);
       }
     } catch (_) {
       try {

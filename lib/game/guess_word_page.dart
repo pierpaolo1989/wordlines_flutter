@@ -71,19 +71,27 @@ class _GuessWordPageState extends State<GuessWordPage> {
   }
 
   Future<void> _onGameEnd() async {
-    await _showEndGameDialog(controller!.score);
+    final previousScore = controller!.score;
+    final keepScore = !controller!.gameOverByLives;
 
-    setState(() {
-      loading = true;
-    });
+    if (controller!.gameOverByLives) {
+      await _showEndGameDialog(previousScore);
+    }
+
+    setState(() => loading = true);
 
     final newWords = await repo.fetchRandom(language: widget.language);
 
-    controller = GameController(newWords)..onGameEnd = _onGameEnd;
+    controller = GameController(
+      newWords,
+      score: keepScore ? previousScore : 0, // ⬅️ QUI
+    )
+      ..onGameEnd = _onGameEnd
+      ..onShowAd = () {
+        AdService.showInterstitial();
+      };
 
-    setState(() {
-      loading = false;
-    });
+    setState(() => loading = false);
   }
 
   Future<void> _loadWords() async {
