@@ -123,13 +123,19 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                       // LANGUAGE
                       Expanded(
                         flex: 1,
-                        child: Text(
-                          entry.language,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: entry.language == "IT"
+                            ? Image.asset(
+                                'icons/flags/png/it.png',
+                                package: 'country_icons',
+                                width: 32,
+                                height: 16,
+                              )
+                            : Image.asset(
+                                'icons/flags/png/gb.png',
+                                package: 'country_icons',
+                                width: 32,
+                                height: 16,
+                              ),
                       ),
                       // NOME
                       Expanded(
