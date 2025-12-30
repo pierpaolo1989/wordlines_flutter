@@ -15,16 +15,21 @@ class WordSet {
 }
 
 class ScoreEntry {
-  final String name;
+  final String username;
+  final String language;
   final int score;
 
-  ScoreEntry(this.name, this.score);
+  ScoreEntry({
+    required this.username,
+    required this.language,
+    required this.score,
+  });
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'score': score,
-      };
-
-  factory ScoreEntry.fromJson(Map<String, dynamic> json) =>
-      ScoreEntry(json['name'], json['score']);
+  factory ScoreEntry.fromMap(Map<String, dynamic> map) {
+    return ScoreEntry(
+      username: map['username'],
+      language: map['language'],
+      score: map['score'],
+    );
+  }
 }

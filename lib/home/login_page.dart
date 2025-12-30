@@ -126,16 +126,6 @@ class _LoginPageState extends State<LoginPage> {
       if (res.user != null) {
         Navigator.pop(context); // AuthProvider aggiorna la Home
       }
-    } on AuthException catch (e) {
-      print("AUTH ERROR: ${e.message}");
-
-      if (e.message.toLowerCase().contains('invalid login credentials')) {
-        _showMessage("Credenziali non valide");
-      } else if (e.message.toLowerCase().contains('email not confirmed')) {
-        _showMessage("Conferma la mail prima di accedere");
-      } else {
-        _showMessage(e.message);
-      }
     } catch (_) {
       try {
         await supabase.auth.signUp(

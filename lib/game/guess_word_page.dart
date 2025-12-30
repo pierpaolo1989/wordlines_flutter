@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:worldlines_mobile/ads/ads_service.dart';
 import 'package:worldlines_mobile/data/wordset_repository.dart';
 import 'package:worldlines_mobile/game/game_controller.dart';
 import 'package:worldlines_mobile/game/game_feedback.dart';
 import 'package:worldlines_mobile/game/game_models.dart';
 import 'package:worldlines_mobile/leaderboard/leaderboard_page.dart';
-import 'package:worldlines_mobile/leaderboard/leaderboard_store.dart';
+import 'package:worldlines_mobile/service/score_service.dart';
 import 'package:worldlines_mobile/widgets/game_keyboard.dart';
 import 'package:worldlines_mobile/widgets/glitter_overlay.dart';
 import 'package:worldlines_mobile/widgets/otp_boxes.dart';
@@ -29,8 +30,10 @@ class _GuessWordPageState extends State<GuessWordPage> {
   final repo = WordSetRepository();
 
   Future<void> _showEndGameDialog(int score) async {
-    final controllerText = TextEditingController();
-
+    final user = Supabase.instance.client.auth.currentUser;
+    final username = user?.userMetadata?['full_name'] ??
+        user?.email?.split('@').first ??
+        'Player';
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -41,22 +44,47 @@ class _GuessWordPageState extends State<GuessWordPage> {
           children: [
             Text("Punteggio: $score"),
             const SizedBox(height: 12),
-            TextField(
-              controller: controllerText,
-              decoration: const InputDecoration(labelText: "Il tuo nome"),
-            ),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           ElevatedButton(
             onPressed: () async {
-              await LeaderboardStorage.save(
-                ScoreEntry(controllerText.text, score),
+              await ScoreService.saveScore(
+                username: username,
+                language: widget.language,
+                score: score,
               );
-              Navigator.pop(context);
               Navigator.pop(context);
             },
             child: const Text("SALVA"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showZeroDialog(int score) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.75),
+      builder: (_) => AlertDialog(
+        title: const Text("🎉 Partita finita"),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Hai totalizzato 0 punti."),
+            SizedBox(height: 12),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center, // 👈 QUI
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("RIPROVA"),
           ),
         ],
       ),
@@ -74,8 +102,10 @@ class _GuessWordPageState extends State<GuessWordPage> {
     final previousScore = controller!.score;
     final keepScore = !controller!.gameOverByLives;
 
-    if (controller!.gameOverByLives) {
+    if (controller!.gameOverByLives && previousScore > 0) {
       await _showEndGameDialog(previousScore);
+    } else {
+      await _showZeroDialog(previousScore);
     }
 
     setState(() => loading = true);

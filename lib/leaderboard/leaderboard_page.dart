@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:worldlines_mobile/game/game_models.dart';
-import 'package:worldlines_mobile/leaderboard/leaderboard_store.dart';
+import 'package:worldlines_mobile/service/score_service.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -56,7 +56,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
         title: const Text("🏆 Classifica"),
       ),
       body: FutureBuilder<List<ScoreEntry>>(
-        future: LeaderboardStorage.load(),
+        future: ScoreService.fetchScores(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -115,29 +115,27 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                   ),
                   child: Row(
                     children: [
-                      // POSIZIONE
+                      // MEDAGLIA
+                      Expanded(
+                        flex: 1,
+                        child: Center(child: _medal(index)),
+                      ),
+                      // LANGUAGE
                       Expanded(
                         flex: 1,
                         child: Text(
-                          "${index + 1}",
+                          entry.language,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-
-                      // MEDAGLIA
-                      Expanded(
-                        flex: 1,
-                        child: Center(child: _medal(index)),
-                      ),
-
                       // NOME
                       Expanded(
                         flex: 4,
                         child: Text(
-                          entry.name,
+                          entry.username,
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 16),
                         ),
