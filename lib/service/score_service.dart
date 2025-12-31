@@ -31,10 +31,9 @@ class ScoreService {
     required int score,
   }) async {
     final user = _client.auth.currentUser;
-    if (user == null) return;
 
     await _client.from('score').insert({
-      'user_id': user.id,
+      if (user != null) 'user_id': user.id,
       'username': username,
       'language': language,
       'score': score,

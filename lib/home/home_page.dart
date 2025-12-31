@@ -32,7 +32,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    print("HOME BUILD – logged: ${auth.isLoggedIn}");
     return Scaffold(
       appBar: AppBar(
         actions: [

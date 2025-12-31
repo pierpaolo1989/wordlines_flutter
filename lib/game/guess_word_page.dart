@@ -8,6 +8,7 @@ import 'package:worldlines_mobile/game/game_feedback.dart';
 import 'package:worldlines_mobile/game/game_models.dart';
 import 'package:worldlines_mobile/leaderboard/leaderboard_page.dart';
 import 'package:worldlines_mobile/service/score_service.dart';
+import 'package:worldlines_mobile/utils/game_score_formatter.dart';
 import 'package:worldlines_mobile/widgets/game_keyboard.dart';
 import 'package:worldlines_mobile/widgets/glitter_overlay.dart';
 import 'package:worldlines_mobile/widgets/otp_boxes.dart';
@@ -31,36 +32,74 @@ class _GuessWordPageState extends State<GuessWordPage> {
 
   Future<void> _showEndGameDialog(int score) async {
     final user = Supabase.instance.client.auth.currentUser;
-    final username = user?.userMetadata?['full_name'] ??
-        user?.email?.split('@').first ??
-        'Player';
+    final isGuest = user == null;
+
+    final TextEditingController nameController = TextEditingController();
+
+    final defaultUsername =
+        user?.userMetadata?['full_name'] ?? user?.email?.split('@').first;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text("🎉 Partita finita"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Punteggio: $score"),
-            const SizedBox(height: 12),
-          ],
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              await ScoreService.saveScore(
-                username: username,
-                language: widget.language,
-                score: score,
-              );
-              Navigator.pop(context);
-            },
-            child: const Text("SALVA"),
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "🎉 Partita finita",
+            textAlign: TextAlign.center,
           ),
-        ],
-      ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Punteggio: $score",
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              // 👇 MOSTRA SOLO SE NON LOGGATO
+              if (isGuest)
+                TextField(
+                  controller: nameController,
+                  textAlign: TextAlign.center,
+                  maxLength: 20,
+                  decoration: const InputDecoration(
+                    labelText: "Nome",
+                    counterText: "",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                final username =
+                    isGuest ? nameController.text.trim() : defaultUsername!;
+
+                if (username.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Inserisci un nome valido"),
+                    ),
+                  );
+                  return;
+                }
+
+                await ScoreService.saveScore(
+                  username: username,
+                  language: widget.language,
+                  score: score,
+                );
+
+                Navigator.pop(context);
+              },
+              child: const Text("SALVA"),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -70,7 +109,7 @@ class _GuessWordPageState extends State<GuessWordPage> {
       barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.75),
       builder: (_) => AlertDialog(
-        title: const Text("🎉 Partita finita"),
+        title: const Text("🎉 Partita finita", textAlign: TextAlign.center),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -104,7 +143,8 @@ class _GuessWordPageState extends State<GuessWordPage> {
 
     if (controller!.gameOverByLives && previousScore > 0) {
       await _showEndGameDialog(previousScore);
-    } else {
+    }
+    if (previousScore == 0) {
       await _showZeroDialog(previousScore);
     }
 
@@ -114,7 +154,7 @@ class _GuessWordPageState extends State<GuessWordPage> {
 
     controller = GameController(
       newWords,
-      score: keepScore ? previousScore : 0, // ⬅️ QUI
+      score: keepScore ? previousScore : 0,
     )
       ..onGameEnd = _onGameEnd
       ..onShowAd = () {
@@ -196,7 +236,14 @@ class _GuessWordPageState extends State<GuessWordPage> {
               actions: [
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text("Score: ${ctrl.score}"),
+                  child: Text(
+                    ScoreFormatter.format(ctrl.score),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Orbitron', // se usi font game
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -234,8 +281,30 @@ class _GuessWordPageState extends State<GuessWordPage> {
                       const SizedBox(height: 20),
                       Text(ctrl.current.last,
                           style: const TextStyle(fontSize: 26)),
-                      const SizedBox(height: 60),
-                      GameKeyboard(onKeyPressed: _onGuess),
+                      const SizedBox(height: 25),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _hintButton(
+                            icon: Icons.skip_next,
+                            badge: ctrl.skipHintsLeft,
+                            enabled: ctrl.skipHintsLeft > 0,
+                            onTap: ctrl.skipWord,
+                          ),
+                          const SizedBox(width: 24),
+                          _hintButton(
+                            icon: Icons.pause_circle,
+                            badge: ctrl.freezeHintsLeft,
+                            enabled:
+                                ctrl.freezeHintsLeft > 0 && !ctrl.timeFrozen,
+                            onTap: ctrl.freezeTime,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      GameKeyboard(
+                          layout: KeyboardLayout.qwerty,
+                          onKeyPressed: _onGuess),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () {
@@ -259,4 +328,38 @@ class _GuessWordPageState extends State<GuessWordPage> {
       ),
     );
   }
+}
+
+Widget _hintButton({
+  required IconData icon,
+  required int badge,
+  required VoidCallback onTap,
+  required bool enabled,
+}) {
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      IconButton(
+        iconSize: 28,
+        onPressed: enabled ? onTap : null,
+        icon: Icon(icon),
+      ),
+      Positioned(
+        right: -2,
+        top: -2,
+        child: CircleAvatar(
+          radius: 9,
+          backgroundColor: Colors.redAccent,
+          child: Text(
+            badge.toString(),
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }

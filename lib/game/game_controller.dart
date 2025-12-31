@@ -10,6 +10,33 @@ class GameController extends ChangeNotifier {
   int currentRound = 1;
   final int maxRounds = 10;
   bool gameOverByLives = false;
+  int skipHintsLeft = 2;
+  int freezeHintsLeft = 2;
+  bool timeFrozen = false;
+
+  // -----------------------------
+  // SKIP WORD (usa 1 aiuto)
+  // -----------------------------
+  void skipWord() {
+    if (skipHintsLeft <= 0) return;
+
+    skipHintsLeft--;
+    next();
+    notifyListeners();
+  }
+
+  // -----------------------------
+  // FREEZE TIME (usa 1 aiuto)
+  // -----------------------------
+  void freezeTime() {
+    if (freezeHintsLeft <= 0 || timeFrozen) return;
+
+    freezeHintsLeft--;
+    timeFrozen = true;
+    timer?.cancel();
+
+    notifyListeners();
+  }
 
   int lives = 3;
   int score;
@@ -37,6 +64,7 @@ class GameController extends ChangeNotifier {
   // -----------------------------
   void startRound() {
     timer?.cancel();
+    timeFrozen = false;
 
     hiddenWord = current.middle;
     revealed = List.filled(hiddenWord.length, "_");
@@ -47,6 +75,8 @@ class GameController extends ChangeNotifier {
     secondsLeft = 30;
 
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (timeFrozen) return;
+
       secondsLeft--;
 
       if (secondsLeft <= 0) {
