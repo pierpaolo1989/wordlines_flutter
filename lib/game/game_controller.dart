@@ -13,6 +13,8 @@ class GameController extends ChangeNotifier {
   int skipHintsLeft = 2;
   int freezeHintsLeft = 2;
   bool timeFrozen = false;
+  final GameDifficulty difficulty;
+  int wrongGuesses = 0;
 
   // -----------------------------
   // SKIP WORD (usa 1 aiuto)
@@ -53,6 +55,7 @@ class GameController extends ChangeNotifier {
   GameController(
     this.wordSets, {
     this.score = 0,
+    this.difficulty = GameDifficulty.easy,
   }) {
     startRound();
   }
@@ -65,6 +68,7 @@ class GameController extends ChangeNotifier {
   void startRound() {
     timer?.cancel();
     timeFrozen = false;
+    wrongGuesses = 0;
 
     hiddenWord = current.middle;
     revealed = List.filled(hiddenWord.length, "_");
@@ -109,16 +113,24 @@ class GameController extends ChangeNotifier {
   // -----------------------------
   void guess(String letter) {
     letter = letter.toUpperCase();
+    bool correct = false;
 
     for (int i = 0; i < hiddenWord.length; i++) {
       if (hiddenWord[i].toUpperCase() == letter && revealed[i] == "_") {
         revealed[i] = hiddenWord[i];
         score += 10;
+        correct = true;
       }
+    }
+
+    if (!correct) {
+      wrongGuesses++;
+      _handleWrongGuess();
     }
 
     if (!revealed.contains("_")) {
       score += 20;
+      wrongGuesses = 0;
 
       if (currentRound >= maxRounds) {
         gameOverByLives = false;
@@ -129,6 +141,24 @@ class GameController extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  void _handleWrongGuess() {
+    final maxErrors = switch (difficulty) {
+      GameDifficulty.easy => 3,
+      GameDifficulty.medium => 2,
+      GameDifficulty.hard => 1,
+    };
+
+    if (wrongGuesses >= maxErrors) {
+      wrongGuesses = 0;
+      lives--;
+
+      if (lives <= 0) {
+        gameOverByLives = true;
+        endGame();
+      }
+    }
   }
 
   // -----------------------------
