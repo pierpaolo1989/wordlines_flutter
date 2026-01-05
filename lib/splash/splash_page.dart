@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:worldlines_mobile/home/onboarding_page.dart';
 import 'package:worldlines_mobile/home/root_page.dart';
 import '../home/home_page.dart';
+import '../widgets/wordlines_logo.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -38,16 +39,15 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
       body: Center(
-        child: Text(
-          "WORDLINES",
-          style: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 4,
-            color: Colors.cyanAccent,
-          ),
+        child: Image.asset(
+          'assets/images/logo.png',
+          width: size.width * 0.9,
+          height: size.height * 2,
+          fit: BoxFit.contain,
         ),
       ),
     );

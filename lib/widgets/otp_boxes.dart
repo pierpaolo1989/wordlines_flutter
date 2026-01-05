@@ -23,7 +23,14 @@ class OtpBoxes extends StatelessWidget {
             (totalWidth - (letters.length - 1) * spacing) / letters.length;
 
         // limiti min/max per non diventare troppo piccole o grandi
-        final width = boxWidth.clamp(30.0, 54.0);
+        final maxWidth = letters.length <= 4
+            ? 40.0
+            : letters.length <= 6
+            ? 48.0
+            : 54.0;
+
+        final width = boxWidth.clamp(30.0, maxWidth);
+
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -33,7 +40,7 @@ class OtpBoxes extends StatelessWidget {
               height: width * 1.2,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: letters[index] != "_"
@@ -43,18 +50,18 @@ class OtpBoxes extends StatelessWidget {
                 ),
                 boxShadow: letters[index] != "_"
                     ? const [
-                        BoxShadow(
-                          color: Colors.cyanAccent,
-                          blurRadius: 8,
-                        )
-                      ]
+                  BoxShadow(
+                    color: Colors.cyanAccent,
+                    blurRadius: 8,
+                  )
+                ]
                     : [],
               ),
               child: Text(
                 letters[index],
                 style: TextStyle(
                   fontSize: width * 0.5,
-                  color: Colors.cyanAccent,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),

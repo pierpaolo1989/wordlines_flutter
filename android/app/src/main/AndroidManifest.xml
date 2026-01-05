@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="worldlines_mobile"
+        android:label="WordLines"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data

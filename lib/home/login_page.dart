@@ -120,22 +120,33 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
 
-      print("LOGIN RES USER: ${res.user}");
-      print("SESSION: ${res.session}");
-
       if (res.user != null) {
-        Navigator.pop(context); // AuthProvider aggiorna la Home
+        _showMessage("Login riuscito!");
+        Navigator.pop(context);
+      } else {
+        // fallback: teoricamente non dovrebbe mai succedere
+        _showMessage("Login fallito.");
       }
-    } catch (_) {
-      try {
-        await supabase.auth.signUp(
-          email: email,
-          password: password,
-        );
-        _showMessage("Registrazione completata! Controlla la mail.");
-      } catch (e) {
-        _showMessage("Errore: $e");
+    } on AuthException catch (e) {
+      if (e.message.contains("Invalid login credentials")) {
+        // password errata
+        _showMessage("Password errata o utente inesistente.");
+      } else if (e.message.contains("User not found")) {
+        // utente non esiste → registra
+        try {
+          await supabase.auth.signUp(
+            email: email,
+            password: password,
+          );
+          _showMessage("Registrazione completata! Controlla la mail.");
+        } catch (e) {
+          _showMessage("Errore durante la registrazione: $e");
+        }
+      } else {
+        _showMessage("Errore: ${e.message}");
       }
+    } catch (e) {
+      _showMessage("Errore imprevisto: $e");
     } finally {
       setState(() => isLoading = false);
     }

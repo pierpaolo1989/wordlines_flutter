@@ -6,7 +6,9 @@ import '../game/guess_word_page.dart';
 import '../game/game_controller.dart';
 import '../game/game_models.dart';
 import 'package:country_icons/country_icons.dart';
-import 'login_page.dart'; // <-- nuova pagina login
+import '../widgets/wordlines_logo.dart';
+import 'login_page.dart';
+import '../leaderboard/leaderboard_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,9 +19,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedLanguage = "IT";
-  bool isDarkMode = true; // stato per il tema
 
-  // lista delle parole (esempio)
   final List<WordSet> wordSets = [
     WordSet("CANE", "BANANA", "GATTO"),
     WordSet("SOLE", "COMPUTER", "LUNA"),
@@ -32,6 +32,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -61,8 +64,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-
-          // tema
           IconButton(
             icon: Icon(
               context.watch<ThemeProvider>().isDarkMode
@@ -75,25 +76,20 @@ class _HomePageState extends State<HomePage> {
           )
         ],
       ),
-      body: Stack(
-        children: [
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "WORDLINES",
-                  style: TextStyle(
-                    fontSize: 42,
-                    color: Colors.cyanAccent,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
-                  ),
-                ),
-                const SizedBox(height: 40), // Spazio dal titolo AppBar
-                DropdownButton<String>(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const WordLinesLogo(fontSize: 48),
+              const SizedBox(height: 40),
+
+              // Selettore lingua
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
                   value: selectedLanguage,
-                  dropdownColor: Colors.black,
+                  dropdownColor: isDark ? theme.cardColor : Colors.white,
                   items: [
                     DropdownMenuItem(
                       value: "IT",
@@ -105,8 +101,7 @@ class _HomePageState extends State<HomePage> {
                             width: 32,
                           ),
                           const SizedBox(width: 8),
-                          const Text("Italiano",
-                              style: TextStyle(color: Colors.white)),
+                          const Text("Italiano"),
                         ],
                       ),
                     ),
@@ -120,8 +115,7 @@ class _HomePageState extends State<HomePage> {
                             width: 32,
                           ),
                           const SizedBox(width: 8),
-                          const Text("English",
-                              style: TextStyle(color: Colors.white)),
+                          const Text("English"),
                         ],
                       ),
                     ),
@@ -130,44 +124,102 @@ class _HomePageState extends State<HomePage> {
                     setState(() => selectedLanguage = value!);
                   },
                 ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChangeNotifierProvider(
-                          create: (_) => GameController(wordSets),
-                          child: GuessWordPage(language: selectedLanguage),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text("PLAY", style: TextStyle(fontSize: 22)),
+              )
+              ,
+
+              const SizedBox(height: 30),
+
+              // Pulsante PLAY
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+                  backgroundColor: theme.primaryColor,
+                  foregroundColor: theme.scaffoldBackgroundColor,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
                 ),
-              ],
-            ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => GameController(wordSets),
+                        child: GuessWordPage(language: selectedLanguage),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "PLAY",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              const SizedBox(height: 40),
+              Row(
+                children: [
+                  Expanded(
+                    child: Divider(
+                      thickness: 2, // 👈 più spessa
+                      color: theme.colorScheme.primary.withOpacity(1),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary, // 👈 dot pieno
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Divider(
+                      thickness: 2,
+                      color: theme.colorScheme.primary.withOpacity(1),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  backgroundColor: theme.cardColor,
+                  foregroundColor: theme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const LeaderboardPage()),
+                  );
+                },
+                child: const Text(
+                  "🏆 Classifica",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              const SizedBox(height: 60),
+              Text(
+                "v1.0.0",
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
           ),
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: Text(
-              "v1.0.0",
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-          ),
-        ],
+        ),
       ),
     );
-  }
-
-  void _changeTheme(ThemeMode mode) {
-    // Cambia il tema globalmente
-    // Serve un approccio come Riverpod o Provider per modificare il tema
-    // Per esempio con Provider potresti avere un ThemeNotifier
   }
 }

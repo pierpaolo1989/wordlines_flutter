@@ -62,19 +62,19 @@ class AppTheme {
       bodyLarge: TextStyle(color: Colors.black, inherit: true),
       bodyMedium: TextStyle(color: Colors.grey, inherit: true),
     ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey,
-        foregroundColor: Colors.cyan,
-        textStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1,
-          inherit: true,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.cyan, // pieno
+          foregroundColor: Colors.white, // contrasto massimo
+          elevation: 2,
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
-    ),
   );
 }

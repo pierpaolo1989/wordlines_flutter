@@ -13,6 +13,8 @@ import 'package:worldlines_mobile/widgets/game_keyboard.dart';
 import 'package:worldlines_mobile/widgets/glitter_overlay.dart';
 import 'package:worldlines_mobile/widgets/otp_boxes.dart';
 
+import '../widgets/help_segmented_bar.dart';
+
 class GuessWordPage extends StatefulWidget {
   final String language;
   const GuessWordPage({super.key, required this.language});
@@ -227,6 +229,25 @@ class _GuessWordPageState extends State<GuessWordPage> {
       );
     }
 
+    Widget _lifeIcon(BuildContext context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Icon(
+          Icons.favorite,
+          color: Colors.redAccent,
+          size: 22,
+          shadows: [
+            Shadow(
+              color: isDark ? Colors.white : Colors.black,
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      );
+    }
+
     return ChangeNotifierProvider.value(
       value: controller!,
       child: Consumer<GameController>(
@@ -253,7 +274,15 @@ class _GuessWordPageState extends State<GuessWordPage> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      const SizedBox(height: 70),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          ctrl.lives,
+                              (_) => _lifeIcon(context),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
                       AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 250),
                         style: TextStyle(
@@ -265,58 +294,37 @@ class _GuessWordPageState extends State<GuessWordPage> {
                         ),
                         child: Text("⏱ ${ctrl.secondsLeft}"),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          ctrl.lives,
-                          (_) => const Icon(Icons.favorite, color: Colors.red),
+                      const SizedBox(height: 50),
+                      Text(
+                        ctrl.current.first,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Text(ctrl.current.first,
-                          style: const TextStyle(fontSize: 26)),
                       const SizedBox(height: 20),
                       OtpBoxes(letters: ctrl.revealed),
                       const SizedBox(height: 20),
-                      Text(ctrl.current.last,
-                          style: const TextStyle(fontSize: 26)),
+                      Text(
+                        ctrl.current.last,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 25),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _hintButton(
-                            icon: Icons.skip_next,
-                            badge: ctrl.skipHintsLeft,
-                            enabled: ctrl.skipHintsLeft > 0,
-                            onTap: ctrl.skipWord,
-                          ),
-                          const SizedBox(width: 24),
-                          _hintButton(
-                            icon: Icons.pause_circle,
-                            badge: ctrl.freezeHintsLeft,
-                            enabled:
-                                ctrl.freezeHintsLeft > 0 && !ctrl.timeFrozen,
-                            onTap: ctrl.freezeTime,
-                          ),
-                        ],
+                      HelpSegmentedBar(
+                        skipLeft: ctrl.skipHintsLeft,
+                        freezeLeft: ctrl.freezeHintsLeft,
+                        freezeActive: ctrl.timeFrozen,
+                        onSkip: ctrl.skipWord,
+                        onFreeze: ctrl.freezeTime,
                       ),
                       const SizedBox(height: 30),
                       GameKeyboard(
                           layout: KeyboardLayout.qwerty,
                           onKeyPressed: _onGuess),
                       const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LeaderboardPage(),
-                            ),
-                          );
-                        },
-                        child: const Text("🏆 Classifica"),
-                      ),
                     ],
                   ),
                 ),
@@ -328,38 +336,4 @@ class _GuessWordPageState extends State<GuessWordPage> {
       ),
     );
   }
-}
-
-Widget _hintButton({
-  required IconData icon,
-  required int badge,
-  required VoidCallback onTap,
-  required bool enabled,
-}) {
-  return Stack(
-    clipBehavior: Clip.none,
-    children: [
-      IconButton(
-        iconSize: 28,
-        onPressed: enabled ? onTap : null,
-        icon: Icon(icon),
-      ),
-      Positioned(
-        right: -2,
-        top: -2,
-        child: CircleAvatar(
-          radius: 9,
-          backgroundColor: Colors.redAccent,
-          child: Text(
-            badge.toString(),
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    ],
-  );
 }

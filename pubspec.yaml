@@ -70,8 +70,9 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/audio/click.wav
-    #- assets/audio/wrong.mp3
-    #- assets/audio/win.mp3
+    - assets/audio/wrong.wav
+    - assets/audio/win.wav
+    - assets/images/logo.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 
@@ -83,6 +84,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  fonts:
+    - family: Baloo2
+      fonts:
+        - asset: assets/fonts/Baloo2-Bold.ttf
   # fonts:
   #   - family: Schyler
   #     fonts:

@@ -32,11 +32,14 @@ class ScoreService {
   }) async {
     final user = _client.auth.currentUser;
 
-    await _client.from('score').insert({
-      if (user != null) 'user_id': user.id,
-      'username': username,
-      'language': language,
-      'score': score,
-    });
+    await _client.from('score').upsert(
+      {
+        if (user != null) 'user_id': user.id,
+        'username': username,
+        'language': language,
+        'score': score,
+      },
+      onConflict: 'language,username',
+    );
   }
 }
